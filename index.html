@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Daily Headlines</title>
+    <title>Newpost York | Your Daily Top Headlines</title>
 
     <meta name="description" content="The latest top headlines from the US, presented in a classic, old-school newspaper style. Get your daily news briefing from Newpost York.">
 
-    <link rel="icon" type="image/png" href="news.jpeg">
+    <link rel="icon" type="image/png" href="favicon.png">
 
     <link href='https://fonts.googleapis.com/css?family=Playfair+Display:400,700,900,400italic,700italic,900italic|Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="style.css">
@@ -18,7 +18,7 @@
 <div class="page-container">
     <div class="head">
         <div class="top-bar">
-            <span class="issue-info" id="month"></span>
+            <span class="issue-info">ISSUE, SEPTEMBER</span>
             <span class="news-label">NEWS</span>
         </div>
         <header>NEWSPAPER</header>
@@ -27,34 +27,32 @@
 
     <div class="main-content">
         <p class="loading-message" style="text-align: center; font-style: italic;">Loading the latest headlines...</p>
+        
         </div>
 </div>
 
 <script>
-    const API_KEY = "1ff38006bab04270860a47500d889c8b"; 
-    const URL = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${API_KEY}`; // Reduced to 20 for better fit in columns
+    // 1. Replaced API key and endpoint for GNews
+    const API_KEY = "5d8a43a5602b1b6ffb7ef0269f291d52";
+    const URL = `https://gnews.io/api/v4/top-headlines?lang=en&country=us&max=10&apikey=${API_KEY}`;
 
     let articles = [];
-    let currentIndex = 0;
-    const rotationTime = 8000; // Not actively used for "rotation" in this layout, but could be for a dynamic refresh
 
     function updateDateLine() {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const months = { month:'long'};
         const today = new Date().toLocaleDateString('en-US', options);
-        const thistoday = new Date().toLocaleDateString('en-US', months);
         document.getElementById("date-line").textContent = `${today}`;
-        document.getElementById("month").textContent = `Issue, ${thistoday}`; // Removed "USA - ... - Ten Articles"
     }
 
     async function loadNews() {
         try {
             let res = await fetch(URL);
             let data = await res.json();
+            
+            // 2. Adjusted JSON structure for GNews (data.articles)
             if (data.articles && data.articles.length > 0) {
                 articles = data.articles;
                 displayNews();
-                // setInterval(displayNews, rotationTime); // Consider if you still want news to "rotate"
             }
         } catch (error) {
             console.error("Error fetching news:", error);
@@ -64,35 +62,40 @@
 
     function displayNews() {
         const mainContent = document.querySelector(".main-content");
-        mainContent.innerHTML = ''; // Clear loading message and any previous content
+        mainContent.innerHTML = ''; // Clear loading message
 
-        articles.slice(0, 10).forEach((article, i) => { // Displaying first 10 articles to fit image layout
+        articles.forEach((article, i) => {
+            // 3. Update field names for GNews
             let fullSnippet = (article.content || article.description || "No content available.")
-                                .replace(/ \[\+\d+ chars\]$/, '');
             
-            // Limit snippet length for the front page as in the image
-            fullSnippet = fullSnippet.substring(0, 250); // Cut to ~250 characters as an example
-            if (fullSnippet.length >= 250) fullSnippet += "...";
-
+            if(fullSnippet) {
+                // GNews content often ends with a source link, let's try to remove it
+                fullSnippet = fullSnippet.substring(0, fullSnippet.lastIndexOf('['));
+                if (fullSnippet.length > 250) {
+                    fullSnippet = fullSnippet.substring(0, 250) + "...";
+                }
+            } else {
+                fullSnippet = "No content snippet available for this article.";
+            }
 
             let articleHTML = `
                 <article class="news-article">
                     <div class="article-head">
                         <span class="headline hl3">${article.title || "No title"}</span>
                         <p class="author-date">
-                            <span class="headline hl4">${article.author || "Unknown Author"}</span><br>
+                            <span class="headline hl4">${(article.source && article.source.name) || "Unknown Source"}</span><br>
                             <span class="date">${new Date(article.publishedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         </p>
                     </div>
                     <p>${fullSnippet}</p>
             `;
 
-            if (article.urlToImage) {
+            if (article.image) {
                 const safeAltText = (article.title || "News article image").replace(/"/g, "'");
                 articleHTML += `
                     <figure class="figure">
-                        <img class="media" src="${article.urlToImage}" alt="${safeAltText}">
-                        <figcaption class="figcaption">${article.source?.name || "Source"}</figcaption>
+                        <img class="media" src="${article.image}" alt="${safeAltText}">
+                        <figcaption class="figcaption">${article.source.name || "Source"}</figcaption>
                     </figure>
                 `;
             }
@@ -106,11 +109,10 @@
             mainContent.innerHTML += articleHTML;
         });
 
-        // Add dummy placeholders for the bottom section as per the image
-        // You would replace these with actual articles or sections
+        // 4. Changed the bottom placeholder text
         mainContent.innerHTML += `
             <div class="bottom-section">
-                <div class="bottom-placeholder">Thanks Guys For The Read : )</div>
+                <div class="bottom-placeholder">Thank you for visiting</div>
             </div>
         `;
     }
@@ -121,5 +123,3 @@
 
 </body>
 </html>
-
-<!-- DONE AND DUSTED : ) -->
